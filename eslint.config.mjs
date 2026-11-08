@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Artefactos de análise (não fazem parte da aplicação):
+    ".rea/**",
   ]),
 ]);
 
