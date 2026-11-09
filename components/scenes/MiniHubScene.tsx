@@ -202,7 +202,7 @@ function MiniHubContent({ content }: { content: S03 }) {
           );
           if (fill) {
             const fillProgress = Math.min(1, Math.max(0, (p - 0.08) / 0.72));
-            fill.style.clipPath = `inset(${(1 - fillProgress) * 100}% 0 0 0)`;
+            fill.style.clipPath = `inset(0 0 ${(1 - fillProgress) * 100}% 0)`;
           }
         },
       });
@@ -222,41 +222,56 @@ function MiniHubContent({ content }: { content: S03 }) {
       const dots = Array.from(
         rootRef.current.querySelectorAll<HTMLElement>(".s03-stack-rail__hex"),
       );
+      const easeIntro = (value: number) => {
+        const x = Math.min(1, Math.max(0, value / 0.24));
+        return x * x * (3 - 2 * x);
+      };
+      const apply = (p: number) => {
+        cards.forEach((card, index) => {
+          const intro = index === 0 ? easeIntro(p) : 1;
+          const enter =
+            index === 0
+              ? 1
+              : Math.min(1, Math.max(0, (p - index / 3) * 3));
+          const settle = Math.min(
+            1,
+            Math.max(0, (p - (index + 1) / 3) * 3),
+          );
+          const introX = index === 0 ? (1 - intro) * -48 : 0;
+          const introY = index === 0 ? (1 - intro) * 78 : 0;
+          gsap.set(card, {
+            xPercent: -50,
+            yPercent: -50,
+            x: introX,
+            y:
+              introY +
+              (index === 0 ? 0 : (1 - enter) * window.innerHeight) -
+              settle * window.innerHeight * 0.04,
+            rotation: (index === 0 ? 0 : (1 - enter) * 3) - settle * 1.5,
+            scale: index === 0 ? 0.96 + intro * 0.04 - settle * 0.08 : 1 - settle * 0.08,
+            opacity:
+              index === 0
+                ? 0.6 + intro * 0.4
+                : enter > 0
+                  ? 1
+                  : 0,
+            zIndex: index + 1,
+          });
+        });
+        const current = Math.min(2, Math.floor(p * 3 + 0.15));
+        dots.forEach((dot, index) => {
+          dot.classList.toggle("is-current", index === current);
+          dot.classList.toggle("is-past", index < current);
+        });
+      };
+      apply(0);
       const trigger = ScrollTrigger.create({
         trigger: partBRef.current,
         scroller,
         start: "top top",
         end: "bottom bottom",
         scrub: 1,
-        onUpdate: (self) => {
-          const p = self.progress;
-          cards.forEach((card, index) => {
-            const enter =
-              index === 0
-                ? 1
-                : Math.min(1, Math.max(0, (p - index / 3) * 3));
-            const settle = Math.min(
-              1,
-              Math.max(0, (p - (index + 1) / 3) * 3),
-            );
-            gsap.set(card, {
-              xPercent: -50,
-              yPercent: -50,
-              y:
-                (index === 0 ? 0 : (1 - enter) * window.innerHeight) -
-                settle * window.innerHeight * 0.04,
-              rotation: (index === 0 ? 0 : (1 - enter) * 3) - settle * 1.5,
-              scale: 1 - settle * 0.08,
-              opacity: index === 0 ? 1 : enter > 0 ? 1 : 0,
-              zIndex: index + 1,
-            });
-          });
-          const current = Math.min(2, Math.floor(p * 3 + 0.15));
-          dots.forEach((dot, index) => {
-            dot.classList.toggle("is-current", index === current);
-            dot.classList.toggle("is-past", index < current);
-          });
-        },
+        onUpdate: (self) => apply(self.progress),
       });
       return () => trigger.kill();
     },

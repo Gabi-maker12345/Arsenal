@@ -13,6 +13,12 @@
 - **Frame:** relógio isolado (`FooterClock`), progresso/charge separados no contexto, anel da navbar isolado num subcomponente e `useSceneCharge` no trilho (sem re-render por frame), decode das imagens split.
 - **Layout:** inalterado nesta revisão (apenas animações/transições e o filtro de cor das imagens da 03). `tsc`, `lint` e build de produção verdes.
 
+### Revisão 13 — flutuação do Pulso, sentido do fill e entrada do passo 01
+
+- **Pulso ao vivo:** os cards têm flutuação contínua (`translate` animado) com amplitudes, durações e fases diferentes por card; pausam quando a cena não está ativa e respeitam `prefers-reduced-motion`.
+- **Título “Grupos”:** o preenchimento branco passou a começar no **G** e descer até o **S** (clip do topo para baixo), em vez de começar no S.
+- **Passo 01:** o primeiro card já nasce centrado (percentuais de centralização aplicados no mount) e entra com um deslocamento suave de -48 px/+78 px, escala 0,96→1 e opacidade 0,6→1 ao longo do início da Parte B — elimina o salto do canto para o centro.
+
 ### Revisão 12 — correções finais de efeitos
 
 - **Preenchimento branco letra a letra** reposto nos títulos 01/03 com uma camada de preenchimento e `clip-path` progressivo, a mesma técnica do manifesto da 05 (01 da esquerda; 03 de baixo para cima).

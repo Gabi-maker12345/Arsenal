@@ -4861,7 +4861,7 @@ html.is-loading body {
   position: absolute;
   inset: 0;
   color: var(--ink);
-  clip-path: inset(100% 0 0 0);
+  clip-path: inset(0 0 100% 0);
   -webkit-text-stroke: 0;
 }
 
@@ -4897,4 +4897,44 @@ html.is-loading body {
 
 .s01-field__photo {
   filter: grayscale(1);
+}
+
+
+/* Cards do Pulso: flutuação contínua, cada um com fase própria. */
+.s01-pulse-card {
+  animation: s01-pulse-float var(--float-duration, 7s) ease-in-out infinite;
+  animation-delay: var(--float-delay, 0s);
+}
+
+@keyframes s01-pulse-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 var(--float-y, -8px); }
+}
+
+.s01-pulse-card:nth-child(3n + 1) {
+  --float-y: -10px;
+  --float-duration: 7.4s;
+  --float-delay: -1.2s;
+}
+
+.s01-pulse-card:nth-child(3n + 2) {
+  --float-y: 8px;
+  --float-duration: 6.8s;
+  --float-delay: -3.1s;
+}
+
+.s01-pulse-card:nth-child(3n) {
+  --float-y: -6px;
+  --float-duration: 8.1s;
+  --float-delay: -4.4s;
+}
+
+.scene[data-active="false"] .s01-pulse-card {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s01-pulse-card {
+    animation: none;
+  }
 }
