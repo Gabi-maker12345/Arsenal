@@ -4817,7 +4817,6 @@ html.is-loading body {
 
 /* Visuais grandes não ficam montados a pintar nas cenas inativas. */
 .scene[data-active="false"] .s01-field,
-.scene[data-active="false"] .s03-hub-wrap,
 .scene[data-active="false"] .s05-tunnel__svg {
   display: none;
 }

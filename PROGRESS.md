@@ -17,7 +17,7 @@
 
 - O preenchimento animado dos títulos 01/03 e o `mix-blend-mode: difference` do título 01 foram removidos: eram repinturas de texto full-screen a cada scroll. Os títulos ficam em contorno, com entrada única de opacidade/posição. O campo da 01, o hub da 03 e o túnel da 05 são desmontados (`display:none`) nas cenas inativas.
 - O hub da 03 passou a girar/escalar por **animação CSS composta** (28 s, pausada fora da cena), sem `gsap.set` do SVG grande por scroll nem contra-rotação dos seis membros. O campo da 01 deixou de ter máscara radial e parallax de grupos SVG.
-- Métricas finais em headless: 01 A/B/C **16,7 ms / 0 drops**; 03 B/C **16,7 ms / 0 drops**, 03 A ~18–32 ms conforme a sequência de navegação (o hub é a única peça pesada restante); 05 e footer **16,7 ms / 0 drops**; fade visível das transições **16,7 ms** (o primeiro paint do destino acontece sob o hold opaco). O canvas do túnel mantém 213 frames/3,2 s, 16,74 ms, 1 drop.
+- Métricas finais em headless: 01 A/B/C **16,7 ms / 0 drops**; 03 B/C **16,7 ms / 0 drops**, 03 A ~18,8 ms / 13 drops na sequência 01→03 (isolado 16,7; o hub é a peça pesada restante); 05 e footer **16,7 ms / 0 drops**; fade visível das transições **16,7 ms** (o primeiro paint do destino acontece sob o hold opaco). O canvas do túnel mantém 213 frames/3,2 s, 16,74 ms, 1 drop.
 - Layout não alterado; o que mudou é a camada visual/animação (títulos em contorno, hub em drift CSS, campo sem parallax/máscara). `tsc`, `lint` e build verdes.
 
 ## 0.0 Revisão 8 — correções v2 (`corrigir.md`)
