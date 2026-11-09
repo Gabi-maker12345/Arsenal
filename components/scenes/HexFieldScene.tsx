@@ -220,10 +220,17 @@ function HexFieldContent({ content }: { content: S01 }) {
       if (!scroller || !partARef.current || !rootRef.current) return;
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const title = rootRef.current.querySelector<HTMLElement>(".s01-title");
-      const base = rootRef.current.querySelector<HTMLElement>(".s01-title__base");
+      const fill = rootRef.current.querySelector<HTMLElement>(".s01-title__fill");
       const zoom = rootRef.current.querySelector<HTMLElement>(".s01-zoom");
       const field = rootRef.current.querySelector<SVGSVGElement>(".s01-field");
-      if (reduced) return;
+      if (reduced) {
+        if (rootRef.current) {
+          const reducedFill =
+            rootRef.current.querySelector<HTMLElement>(".s01-title__fill");
+          if (reducedFill) reducedFill.style.clipPath = "inset(0 0 0 0)";
+        }
+        return;
+      }
       const layers = PULSE_DEPTHS.map((speed, depth) => ({
         speed,
         nodes: gsap.utils.toArray<SVGGElement>(
@@ -241,9 +248,9 @@ function HexFieldContent({ content }: { content: S01 }) {
         onUpdate: (self) => {
           const p = self.progress;
 
-          if (base) {
+          if (fill) {
             const fillProgress = Math.min(1, Math.max(0, (p - 0.08) / 0.62));
-            base.style.color = `rgba(242, 241, 237, ${fillProgress})`;
+            fill.style.clipPath = `inset(0 ${(1 - fillProgress) * 100}% 0 0)`;
           }
           layers.forEach((layer) => {
             layer.nodes.forEach((node) => {
@@ -453,6 +460,9 @@ function HexFieldContent({ content }: { content: S01 }) {
             aria-label={content.title}
           >
             <span className="s01-title__base" aria-hidden="true">
+              {content.title}
+            </span>
+            <span className="s01-title__fill" aria-hidden="true">
               {content.title}
             </span>
           </h2>

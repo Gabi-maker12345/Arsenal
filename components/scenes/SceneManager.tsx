@@ -98,6 +98,7 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
   const transitionModeRef = useRef<"portal" | "fade">("portal");
   const transitionRef = useRef<gsap.core.Timeline | null>(null);
   const coverRef = useRef<HTMLDivElement>(null);
+  const coverSolidRef = useRef<HTMLDivElement>(null);
   const lastArrivalRef = useRef(0);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const chargeRef = useRef({ value: 0, direction: null as "next" | "prev" | null, timer: 0 });
@@ -429,7 +430,7 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
       y: window.innerHeight / 2,
     };
     const cover = coverRef.current;
-    const coverFill = cover?.querySelector<HTMLElement>(".scene-cover__fill");
+    const solid = coverSolidRef.current;
 
     if (targetContent) gsap.set(targetContent, { autoAlpha: 1 });
     target.dispatchEvent(new CustomEvent(SCENE_VISUAL_EVENT));
@@ -448,7 +449,6 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
     }
 
     cover.style.clipPath = "";
-    if (coverFill) coverFill.style.clipPath = "";
     gsap.set(cover, {
       autoAlpha: 1,
       scale: 0.16,
@@ -456,6 +456,7 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
       willChange: "transform, opacity",
     });
     target.style.clipPath = "none";
+    if (solid) gsap.set(solid, { autoAlpha: 0 });
 
     const timeline = gsap.timeline({
       onComplete: () => finish(id),
@@ -472,30 +473,31 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
           setActive(id);
           activeRef.current = id;
           gsap.set(target, { autoAlpha: 1 });
-          // Depois de coberta a tela, o hexágono vira um retângulo sólido.
-          // O fade final passa a ser uma camada inteira composta, sem
-          // recalcular o clip-path em cada frame.
-          cover.style.clipPath = "none";
-          if (coverFill) coverFill.style.clipPath = "none";
           target.dispatchEvent(new CustomEvent(SCENE_ENTER_EVENT));
           ScrollTrigger.refresh();
         },
         undefined,
         0.38,
       )
-      // Hold com a cobertura opaca: o primeiro paint/rasterização da cena
-      // de destino acontece enquanto o ecrã ainda está tapado; o fade final
-      // é mais longo para uma sensação de fluidez, não de corte.
-      .to(cover, {
-        opacity: 0,
-        duration: 0.55,
+      // O hexágono não se transforma em quadrado por clip-path. Uma segunda
+      // camada full-screen entra em opacidade por cima dele: a passagem de
+      // hexágono para cobertura total é um fade contínuo.
+      .to(solid, {
+        autoAlpha: 1,
+        duration: 0.28,
         ease: "power2.inOut",
-      }, 0.52)
+      }, 0.38)
       .set(cover, {
         autoAlpha: 0,
         scale: 1,
         willChange: "auto",
-      }, 1.07);
+      }, 0.66)
+      .to(solid, {
+        autoAlpha: 0,
+        duration: 0.55,
+        ease: "power2.inOut",
+      }, 0.78)
+      .set(solid, { autoAlpha: 0, willChange: "auto" }, 1.33);
 
     transitionRef.current = timeline;
 
@@ -608,6 +610,7 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
         <div ref={coverRef} className="scene-cover" aria-hidden="true">
           <span className="scene-cover__fill" />
         </div>
+        <div ref={coverSolidRef} className="scene-cover__solid" aria-hidden="true" />
         <p className="sr-only" aria-live="polite">
           {announcement}
         </p>

@@ -40,6 +40,7 @@ export function TunnelScene({ content }: { content: S05 }) {
 function TunnelContent({ content }: { content: S05 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const tunnelRef = useRef<HTMLDivElement>(null);
+  const tunnelPartRef = useRef<HTMLDivElement>(null);
   const manifestoRef = useRef<HTMLElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
@@ -218,7 +219,9 @@ function TunnelContent({ content }: { content: S05 }) {
 
   useGSAP(
     () => {
-      if (!scroller || !rootRef.current || !tunnelRef.current) return;
+      if (!scroller || !rootRef.current || !tunnelRef.current || !tunnelPartRef.current) {
+        return;
+      }
       let trigger: ScrollTrigger | null = null;
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -226,11 +229,8 @@ function TunnelContent({ content }: { content: S05 }) {
         if (progress < 0.94) fieldRef.current?.set(progress);
 
         const textOpacity =
-          progress < 0.08
-            ? 0
-            : progress <= 0.55
-              ? 1
-              : Math.max(0, 1 - (progress - 0.55) / 0.15);
+          smoothstep(0.015, 0.18, progress) *
+          (1 - smoothstep(0.55, 0.72, progress));
         if (textRef.current) {
           textRef.current.style.opacity = String(textOpacity);
           textRef.current.style.transform = `translate3d(0, ${(1 - Math.min(1, progress / 0.55)) * 18}px, 0)`;
@@ -267,11 +267,10 @@ function TunnelContent({ content }: { content: S05 }) {
 
       render(0);
       trigger = ScrollTrigger.create({
-        trigger: tunnelRef.current,
+        trigger: tunnelPartRef.current,
         scroller: scroller ?? undefined,
         start: "top top",
-        end: "+=350%",
-        pin: true,
+        end: "bottom bottom",
         scrub: 0.5,
         onUpdate: (self) => render(self.progress),
       });
@@ -362,7 +361,8 @@ function TunnelContent({ content }: { content: S05 }) {
 
   return (
     <div className="s05-scene" ref={rootRef}>
-      <div className="s05-tunnel" ref={tunnelRef}>
+      <div className="s05-tunnel-part" ref={tunnelPartRef}>
+        <div className="s05-tunnel" ref={tunnelRef}>
         <div className="s05-tunnel__svg" aria-hidden="true">
           <canvas ref={canvasRef} className="s05-tunnel__canvas" />
         </div>
@@ -386,6 +386,7 @@ function TunnelContent({ content }: { content: S05 }) {
         <span className="s05-tunnel__indicator" aria-hidden="true">
           <span ref={indicatorRef} className="s05-tunnel__indicator-fill" />
         </span>
+      </div>
       </div>
 
       <section className="s05-manifesto" ref={manifestoRef}>

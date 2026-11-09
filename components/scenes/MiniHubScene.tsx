@@ -173,12 +173,12 @@ function MiniHubContent({ content }: { content: S03 }) {
         return;
       }
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const base = rootRef.current.querySelector<HTMLElement>(".s03-title__base");
+      const fill = rootRef.current.querySelector<HTMLElement>(".s03-title__fill");
       const members = memberRefs.current.filter(
         (member): member is SVGGElement => Boolean(member),
       );
       if (reduced) {
-        if (base) base.style.color = "var(--ink)";
+        if (fill) fill.style.clipPath = "inset(0 0 0 0)";
         return;
       }
       const trigger = ScrollTrigger.create({
@@ -200,9 +200,9 @@ function MiniHubContent({ content }: { content: S03 }) {
               transformOrigin: "50% 50%",
             }),
           );
-          if (base) {
+          if (fill) {
             const fillProgress = Math.min(1, Math.max(0, (p - 0.08) / 0.72));
-            base.style.color = `rgba(242, 241, 237, ${fillProgress})`;
+            fill.style.clipPath = `inset(${(1 - fillProgress) * 100}% 0 0 0)`;
           }
         },
       });
@@ -453,6 +453,9 @@ function MiniHubContent({ content }: { content: S03 }) {
               aria-label={content.title}
             >
               <span className="s03-title__base" aria-hidden="true">
+                {content.title}
+              </span>
+              <span className="s03-title__fill" aria-hidden="true">
                 {content.title}
               </span>
             </h2>

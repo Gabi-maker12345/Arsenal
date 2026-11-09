@@ -3340,13 +3340,6 @@ html.is-loading body {
   overflow: visible;
 }
 
-.footer-wordmark__mark * {
-  fill: none !important;
-  stroke: rgba(234, 233, 229, 0.28);
-  stroke-width: 1px;
-  vector-effect: non-scaling-stroke;
-}
-
 .footer-wordmark__text {
   display: block;
   transform: translateY(0.1em);
@@ -4841,5 +4834,67 @@ html.is-loading body {
 }
 
 .s03-member image {
+  filter: grayscale(1);
+}
+
+
+/* Preenchimento branco letra a letra, como o manifesto da 05. */
+.s01-title__base,
+.s01-title__fill {
+  grid-area: 1 / 1;
+  display: block;
+  white-space: nowrap;
+}
+
+.s01-title__fill {
+  color: var(--ink);
+  clip-path: inset(0 100% 0 0);
+}
+
+.s03-title__base,
+.s03-title__fill {
+  display: block;
+  white-space: nowrap;
+}
+
+.s03-title__fill {
+  position: absolute;
+  inset: 0;
+  color: var(--ink);
+  clip-path: inset(100% 0 0 0);
+  -webkit-text-stroke: 0;
+}
+
+.scene-cover__solid {
+  position: fixed;
+  inset: 0;
+  z-index: 76;
+  background: var(--bg-deep);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: opacity;
+}
+
+/* Túnel estável: sticky nativo em vez de pin transform por frame. */
+.s05-tunnel-part {
+  position: relative;
+  height: 450svh;
+}
+
+.s05-tunnel {
+  position: sticky;
+  top: 0;
+}
+
+
+/* A logo do wordmark é a mesma da navbar (BrandMark), grande e branca. */
+.footer-wordmark__mark {
+  width: 100%;
+  height: 100%;
+  color: var(--ink);
+}
+
+.s01-field__photo {
   filter: grayscale(1);
 }

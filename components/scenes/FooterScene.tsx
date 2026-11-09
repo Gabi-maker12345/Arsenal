@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { initReveals } from "@/lib/reveals";
 import type { FooterContent } from "@/content/schema";
-import { HUB_LOGO_SVG, scopeHubLogoSvg } from "@/components/landing/hub-logo-markup";
+import { BrandMark } from "./BrandMark";
 import { Scene, useSceneRuntime } from "./Scene";
 import { ScrollHint } from "./ScrollHint";
 import { useSceneManager } from "./SceneManager";
@@ -25,11 +25,6 @@ function FooterContentBlock({ content }: { content: FooterContent }) {
   const wordmarkInnerRef = useRef<HTMLSpanElement>(null);
   const { enterCount, scroller } = useSceneRuntime();
   const { go } = useSceneManager();
-  const wordmarkId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
-  const wordmarkLogo = useMemo(
-    () => scopeHubLogoSvg(HUB_LOGO_SVG, `footer-${wordmarkId}-`),
-    [wordmarkId],
-  );
 
   useGSAP(
     () => {
@@ -126,10 +121,7 @@ function FooterContentBlock({ content }: { content: FooterContent }) {
           <span className="sr-only">Arsenal</span>
           <span ref={wordmarkInnerRef} className="footer-wordmark__inner">
             <span className="footer-wordmark__mark-wrap" aria-hidden="true">
-              <span
-                className="footer-wordmark__mark-full"
-                dangerouslySetInnerHTML={{ __html: wordmarkLogo }}
-              />
+              <BrandMark className="footer-wordmark__mark" />
             </span>
             <span className="footer-wordmark__text-wrap" aria-hidden="true">
               <span className="footer-wordmark__text">RSENAL</span>

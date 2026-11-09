@@ -13,6 +13,16 @@
 - **Frame:** relógio isolado (`FooterClock`), progresso/charge separados no contexto, anel da navbar isolado num subcomponente e `useSceneCharge` no trilho (sem re-render por frame), decode das imagens split.
 - **Layout:** inalterado nesta revisão (apenas animações/transições e o filtro de cor das imagens da 03). `tsc`, `lint` e build de produção verdes.
 
+### Revisão 12 — correções finais de efeitos
+
+- **Preenchimento branco letra a letra** reposto nos títulos 01/03 com uma camada de preenchimento e `clip-path` progressivo, a mesma técnica do manifesto da 05 (01 da esquerda; 03 de baixo para cima).
+- **Primeiro scroll** da 01/03 restaurado: parallax de profundidade do campo, zoom, rotação/escala do hub e contra-rotação dos membros.
+- **VOZ:** fade-in/out suave via `smoothstep` no progresso (a palavra e a legenda), em vez do salto a p=0,08. O fade do A no HubLogo foi revertido (não era aí).
+- **Transição:** o hexágono deixa de mudar o `clip-path` para quadrado; uma camada full-screen entra em opacidade por cima do hex e o fade final é composto. O salto hexágono→quadrado desapareceu.
+- **Túnel estável:** pin do ScrollTrigger substituído por `position: sticky` num `.s05-tunnel-part` de 450svh; o retângulo do túnel fica em `top: 0` durante o scroll (sem “tremor”).
+- **Footer:** a logo do wordmark é a **BrandMark da navbar**, grande e branca, com as letras “RSENAL” também a branco sólido.
+- **Timings:** cobertura 0,38 s + hold 0,14 s + fade 0,55 s; `MOTION.reveal/rise/ui` e entradas de título/copy alongadas.
+
 ### Revisão 11 — restauro dos efeitos pedidos
 
 - **01:** preenchimento branco do título de novo ativo, feito agora numa única camada (`color` do span base interpolado com o scroll, sem segunda camada de texto); parallax de profundidade do campo e zoom-through restaurados. O campo continua sem máscara radial.
