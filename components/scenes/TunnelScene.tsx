@@ -24,14 +24,6 @@ const RING_POINTS = Array.from({ length: 6 }, (_, index) => {
   return `${(CENTER + RING_RADIUS * Math.cos(angle)).toFixed(2)},${(CENTER + RING_RADIUS * Math.sin(angle)).toFixed(2)}`;
 }).join(" ");
 
-const RAYS = Array.from({ length: 6 }, (_, index) => {
-  const angle = ((-90 + 60 * index) * Math.PI) / 180;
-  return {
-    x: (CENTER + RING_RADIUS * Math.cos(angle)).toFixed(2),
-    y: (CENTER + RING_RADIUS * Math.sin(angle)).toFixed(2),
-  };
-});
-
 function smoothstep(min: number, max: number, value: number) {
   const x = Math.min(1, Math.max(0, (value - min) / (max - min)));
   return x * x * (3 - 2 * x);
@@ -51,35 +43,187 @@ function TunnelContent({ content }: { content: S05 }) {
   const manifestoRef = useRef<HTMLElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const indicatorRef = useRef<HTMLSpanElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const renderRef = useRef<((progress: number) => void) | null>(null);
-  const { enterCount, visualCount, scroller } = useSceneRuntime();
+  const fieldRef = useRef<{
+    set: (progress: number) => void;
+    draw: (progress: number) => void;
+  } | null>(null);
+  const { active, enterCount, visualCount, scroller } = useSceneRuntime();
   const { go } = useSceneManager();
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext("2d", {
+      alpha: true,
+      desynchronized: true,
+    });
+    if (!context) return;
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const state = { active, current: 0, target: 0 };
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let raf = 0;
+    let last = 0;
+    let ink = "#f2f1ed";
+    let accent = "#dff4ff";
+
+    const readColors = () => {
+      const styles = getComputedStyle(canvas);
+      ink = styles.getPropertyValue("--ink").trim() || ink;
+      accent = styles.getPropertyValue("--accent").trim() || accent;
+    };
+
+    const paint = (progress: number) => {
+      if (!width || !height) return;
+      const count = width < 900 ? 9 : RING_COUNT;
+      const cx = width / 2;
+      const cy = height / 2;
+      const base = Math.max(width, height) * 0.33;
+      const now = performance.now() / 1000;
+
+      context.clearRect(0, 0, width, height);
+      context.lineJoin = "round";
+      context.lineWidth = 1.1;
+
+      // Raios estáticos. Uma única passagem de traço.
+      context.globalAlpha = 0.22;
+      context.strokeStyle = accent;
+      context.beginPath();
+      for (let index = 0; index < 6; index += 1) {
+        const angle = -Math.PI / 2 + (index * Math.PI) / 3;
+        context.moveTo(cx, cy);
+        context.lineTo(cx + Math.cos(angle) * base, cy + Math.sin(angle) * base);
+      }
+      context.stroke();
+
+      // Anéis em perspetiva. O canvas evita 14 atualizações de estilo SVG
+      // por frame; o progresso é suavizado no RAF.
+      context.strokeStyle = ink;
+      for (let index = 0; index < count; index += 1) {
+        const depth = (index / count + progress * 1.6) % 1;
+        const alpha =
+          smoothstep(0, 0.12, depth) * (1 - smoothstep(0.78, 1, depth)) * 0.6;
+        if (alpha <= 0.002) continue;
+        const radius = base * 0.045 * Math.pow(60, depth);
+        context.save();
+        context.translate(cx, cy);
+        context.rotate(depth * 26);
+        context.globalAlpha = alpha;
+        context.beginPath();
+        for (let point = 0; point < 6; point += 1) {
+          const angle = -Math.PI / 2 + (point * Math.PI) / 3;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+          if (point === 0) context.moveTo(x, y);
+          else context.lineTo(x, y);
+        }
+        context.closePath();
+        context.stroke();
+        context.restore();
+      }
+
+      // Anel de sinal accent, curto, a cada 2.4 s.
+      const cycle = (now % 2.4) / 2.4;
+      const signal = Math.min(1, cycle / 0.58);
+      if (signal < 1) {
+        const radius = base * (0.55 + 0.63 * signal);
+        context.save();
+        context.translate(cx, cy);
+        context.globalAlpha = (1 - signal) * 0.6;
+        context.strokeStyle = accent;
+        context.beginPath();
+        for (let point = 0; point < 6; point += 1) {
+          const angle = -Math.PI / 2 + (point * Math.PI) / 3;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+          if (point === 0) context.moveTo(x, y);
+          else context.lineTo(x, y);
+        }
+        context.closePath();
+        context.stroke();
+        context.restore();
+      }
+      context.globalAlpha = 1;
+      context.strokeStyle = ink;
+    };
+
+    const resize = () => {
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      width = canvas.clientWidth;
+      height = canvas.clientHeight;
+      if (!width || !height) return;
+      const nextWidth = Math.round(width * dpr);
+      const nextHeight = Math.round(height * dpr);
+      if (canvas.width !== nextWidth || canvas.height !== nextHeight) {
+        canvas.width = nextWidth;
+        canvas.height = nextHeight;
+      }
+      context.setTransform(dpr, 0, 0, dpr, 0, 0);
+      paint(state.current);
+    };
+
+    const loop = (now: number) => {
+      raf = 0;
+      if (!state.active) return;
+      if (!last) last = now;
+      const dt = Math.min(64, now - last) / 1000;
+      last = now;
+      const difference = state.target - state.current;
+      state.current += difference * (1 - Math.exp(-dt * 18));
+      if (Math.abs(difference) < 0.00035) {
+        state.current = state.target;
+        paint(state.current);
+        return;
+      }
+      paint(state.current);
+      raf = window.requestAnimationFrame(loop);
+    };
+
+    const set = (progress: number) => {
+      state.target = progress;
+      if (reduced) {
+        state.current = progress;
+        paint(progress);
+        return;
+      }
+      if (!state.active) return;
+      if (!raf) {
+        last = 0;
+        raf = window.requestAnimationFrame(loop);
+      }
+    };
+
+    const draw = (progress: number) => {
+      state.target = progress;
+      state.current = progress;
+      paint(progress);
+    };
+
+    fieldRef.current = { set, draw };
+    readColors();
+    resize();
+    const observer = new ResizeObserver(resize);
+    observer.observe(canvas);
+
+    return () => {
+      observer.disconnect();
+      if (raf) window.cancelAnimationFrame(raf);
+      fieldRef.current = null;
+    };
+  }, [active]);
 
   useGSAP(
     () => {
       if (!scroller || !rootRef.current || !tunnelRef.current) return;
       let trigger: ScrollTrigger | null = null;
-      const rings = gsap.utils.toArray<SVGPolygonElement>(".s05-ring");
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const N = window.innerWidth < 900 ? 9 : RING_COUNT;
 
       const render = (progress: number) => {
-        rings.forEach((ring, index) => {
-          if (index >= N) {
-            gsap.set(ring, { opacity: 0 });
-            return;
-          }
-          const d = (index / N + progress * 1.6) % 1;
-          const scale = 0.045 * Math.pow(60, d);
-          const opacity =
-            smoothstep(0, 0.12, d) * (1 - smoothstep(0.78, 1, d)) * 0.6;
-          gsap.set(ring, {
-            scale,
-            rotation: d * 26,
-            opacity,
-            svgOrigin: "500 500",
-          });
-        });
+        if (progress < 0.94) fieldRef.current?.set(progress);
 
         const textOpacity =
           progress < 0.08
@@ -88,27 +232,34 @@ function TunnelContent({ content }: { content: S05 }) {
               ? 1
               : Math.max(0, 1 - (progress - 0.55) / 0.15);
         if (textRef.current) {
-          gsap.set(textRef.current, {
-            opacity: textOpacity,
-            y: (1 - Math.min(1, progress / 0.55)) * 18,
-          });
+          textRef.current.style.opacity = String(textOpacity);
+          textRef.current.style.transform = `translate3d(0, ${(1 - Math.min(1, progress / 0.55)) * 18}px, 0)`;
         }
         if (indicatorRef.current) {
           indicatorRef.current.style.transform = `scaleY(${progress})`;
         }
         if (tunnelRef.current) {
-          gsap.set(tunnelRef.current, {
-            autoAlpha: progress >= 0.88 ? 0 : 1,
-          });
+          const hidden = progress >= 0.88;
+          tunnelRef.current.style.opacity = hidden ? "0" : "1";
+          // Não fixar `visible` inline: isso escapa ao `visibility:hidden` da
+          // cena inativa e deixava o túnel por cima das outras secções.
+          tunnelRef.current.style.visibility = hidden ? "hidden" : "";
         }
       };
 
       renderRef.current = render;
 
       if (reduced) {
+        fieldRef.current?.draw(0.32);
         render(0.32);
-        if (textRef.current) gsap.set(textRef.current, { autoAlpha: 1, y: 0 });
-        if (tunnelRef.current) gsap.set(tunnelRef.current, { autoAlpha: 1 });
+        if (textRef.current) {
+          textRef.current.style.opacity = "1";
+          textRef.current.style.transform = "translate3d(0, 0, 0)";
+        }
+        if (tunnelRef.current) {
+          tunnelRef.current.style.opacity = "1";
+          tunnelRef.current.style.visibility = "";
+        }
         return () => {
           renderRef.current = null;
         };
@@ -151,25 +302,9 @@ function TunnelContent({ content }: { content: S05 }) {
         { opacity: 0, scale: 0.6, duration: 0.9, ease: "expo.out" },
         0.3,
       );
-    const signal = rootRef.current?.querySelector<SVGPolygonElement>(".s05-signal");
-    const signalTween = signal
-      ? gsap.fromTo(
-          signal,
-          { scale: 0.55, opacity: 0.7, transformOrigin: "50% 50%" },
-          {
-            scale: 1.18,
-            opacity: 0,
-            duration: 1.35,
-            ease: "power2.out",
-            repeat: -1,
-            repeatDelay: 1.05,
-          },
-        )
-      : null;
     const frame = window.requestAnimationFrame(() => ScrollTrigger.refresh());
     return () => {
       intro.kill();
-      signalTween?.kill();
       window.cancelAnimationFrame(frame);
     };
   }, [visualCount]);
@@ -228,31 +363,9 @@ function TunnelContent({ content }: { content: S05 }) {
   return (
     <div className="s05-scene" ref={rootRef}>
       <div className="s05-tunnel" ref={tunnelRef}>
-        <svg
-          className="s05-tunnel__svg"
-          viewBox="0 0 1000 1000"
-          preserveAspectRatio="xMidYMid slice"
-          aria-hidden="true"
-        >
-          {RAYS.map((ray, index) => (
-            <line
-              key={`ray-${index}`}
-              className="s05-tunnel__ray"
-              x1={CENTER}
-              y1={CENTER}
-              x2={ray.x}
-              y2={ray.y}
-            />
-          ))}
-          {Array.from({ length: RING_COUNT }, (_, index) => (
-            <polygon
-              key={`ring-${index}`}
-              className="s05-ring"
-              points={RING_POINTS}
-            />
-          ))}
-          <polygon className="s05-signal" points={RING_POINTS} />
-        </svg>
+        <div className="s05-tunnel__svg" aria-hidden="true">
+          <canvas ref={canvasRef} className="s05-tunnel__canvas" />
+        </div>
         <div className="s05-tunnel__mark" aria-hidden="true">
           <BrandMark className="s05-tunnel__mark-svg" />
         </div>
@@ -295,6 +408,7 @@ function TunnelContent({ content }: { content: S05 }) {
           <p className="scene-counter">05 / 05</p>
           <div className="s05-map__logo">
             <HubLogo
+              active={active}
               mode="map"
               interactive
               variant="map"

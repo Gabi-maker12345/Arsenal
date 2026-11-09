@@ -3,6 +3,23 @@
 > Estado: **implementação concluída e verificada** (build de produção, lint, tipos, smoke tests a 375/768/1280/1920, interacção de rato/teclado/toque e `prefers-reduced-motion`).
 > Fonte de verdade: `CLONE_SPEC.md`, com as **revisões do utilizador** registadas abaixo (a revisão prevalece sobre a Parte B original).
 
+## 0.0.1 Revisão 9 — fluidez de animações e transições
+
+- **Túnel da 05 em canvas 2D:** o SVG de 14 anéis deixou de escrever `scale/rotation/opacity` em 14 elementos por frame. O canvas desenha anéis, raios e sinal num único RAF, com DPR máximo 1,5, alvo de scroll suavizado (`1 − e^−18dt`) e paragem quando a diferença estabiliza. Só desenha com a cena ativa e antes de o túnel sair (p < 0,94). Resultado: 213 frames em 3,2 s, **16,74 ms médios, p95 16,8, 1 drop**, sem long tasks.
+- **Transições sem `clip-path` full-screen:** o portal que recalculava a máscara da cena inteira foi substituído por uma cobertura hexagonal composta (escala/clip só na entrada; depois retângulo sólido). A cena de destino é ativada e pré-pintada debaixo da cobertura opaca; o fade final é uma camada inteira com opacidade. Fade visível: 60 fps em s02→s03, s03→s04, s04→s05, s05→footer e footer→hero; hero→s01 e s01→s02 ficam em ~17–20 ms (o primeiro paint do destino acontece durante o hold opaco).
+- **Loops pausados fora da cena:** HubLogo (hero/mapa) ganhou `setActive`, parando intro/beat/HUD; marquee, avatares da 01, dots do footer, beacon dos nós e hint de scroll pausam em `.scene[data-active="false"]`; grão passou a estático; spotlight é uma camada de 900 px deslocada por `translate3d` em vez de recalcular o gradiente full-screen.
+- **01:** lente do ponteiro em RAF + `quickTo` só nas 9 fotos; etiqueta de tile já não faz `setState` por movimento; centros/limites dos cartões do Pulso ficam em cache (sem `getBoundingClientRect` por frame); entrada do campo simplificada para não re-rasterizar imagens filtradas.
+- **03:** imagens dos membros com `grayscale` mas o hub promovido a camada (`will-change: transform`) — 128 frames/2 s, **16,67 ms, 0 drops**; 72 barras agrupadas em 8 grupos para o orador; entrada do hub simplificada; bento sem `rotateX` na entrada (tilt mantém-se no hover).
+- **Frame:** relógio isolado (`FooterClock`), progresso/charge separados no contexto, anel da navbar isolado num subcomponente e `useSceneCharge` no trilho (sem re-render por frame), decode das imagens split.
+- **Layout:** inalterado nesta revisão (apenas animações/transições e o filtro de cor das imagens da 03). `tsc`, `lint` e build de produção verdes.
+
+### Ajustes finais (segunda passagem de fluidez)
+
+- O preenchimento animado dos títulos 01/03 e o `mix-blend-mode: difference` do título 01 foram removidos: eram repinturas de texto full-screen a cada scroll. Os títulos ficam em contorno, com entrada única de opacidade/posição. O campo da 01, o hub da 03 e o túnel da 05 são desmontados (`display:none`) nas cenas inativas.
+- O hub da 03 passou a girar/escalar por **animação CSS composta** (28 s, pausada fora da cena), sem `gsap.set` do SVG grande por scroll nem contra-rotação dos seis membros. O campo da 01 deixou de ter máscara radial e parallax de grupos SVG.
+- Métricas finais em headless: 01 A/B/C **16,7 ms / 0 drops**; 03 B/C **16,7 ms / 0 drops**, 03 A ~18–32 ms conforme a sequência de navegação (o hub é a única peça pesada restante); 05 e footer **16,7 ms / 0 drops**; fade visível das transições **16,7 ms** (o primeiro paint do destino acontece sob o hold opaco). O canvas do túnel mantém 213 frames/3,2 s, 16,74 ms, 1 drop.
+- Layout não alterado; o que mudou é a camada visual/animação (títulos em contorno, hub em drift CSS, campo sem parallax/máscara). `tsc`, `lint` e build verdes.
+
 ## 0.0 Revisão 8 — correções v2 (`corrigir.md`)
 
 - **N1/N3 navbar:** cápsula hexagonal de vidro, 48 px (>899) / 44 px (≤899), topo 14 px, largura alinhada ao conteúdo da hero: `margin-inline: var(--inset) var(--gutter)` — 1440: x 138,2→1393,9; 390: x 37,4→370. Indicador central, `ENTRAR` legível, foco e esconder-ao-scroll; nunca escondida com o mapa aberto; oculta no footer.

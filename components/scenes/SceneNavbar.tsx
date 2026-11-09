@@ -14,7 +14,6 @@ function brandOrigin(element: HTMLElement) {
 
 export function SceneNavbar() {
   const { active, mapOpen, go, openMap } = useSceneManager();
-  const { progress } = useSceneProgress();
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
@@ -157,17 +156,7 @@ export function SceneNavbar() {
           aria-expanded={mapOpen}
           onClick={openMap}
         >
-          <svg className="nav__ring" viewBox="0 0 16 16" aria-hidden="true">
-            <circle cx="8" cy="8" r="6.5" pathLength="100" />
-            <circle
-              cx="8"
-              cy="8"
-              r="6.5"
-              pathLength="100"
-              className="nav__ring-fill"
-              style={{ strokeDashoffset: 100 - progress * 100 }}
-            />
-          </svg>
+          <NavProgressRing />
           <span className="nav__now-i">{SCENE_COUNTERS[active]}</span>
           <span className="nav__now-label">
             <span key={active} className="nav__now-t">
@@ -203,5 +192,23 @@ export function SceneNavbar() {
         </div>
       </nav>
     </header>
+  );
+}
+
+
+function NavProgressRing() {
+  const { progress } = useSceneProgress();
+  return (
+    <svg className="nav__ring" viewBox="0 0 16 16" aria-hidden="true">
+      <circle cx="8" cy="8" r="6.5" pathLength="100" />
+      <circle
+        cx="8"
+        cy="8"
+        r="6.5"
+        pathLength="100"
+        className="nav__ring-fill"
+        style={{ strokeDashoffset: 100 - progress * 100 }}
+      />
+    </svg>
   );
 }

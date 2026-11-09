@@ -26,7 +26,6 @@ function FooterContentBlock({ content }: { content: FooterContent }) {
   const wordmarkInnerRef = useRef<HTMLSpanElement>(null);
   const { enterCount, scroller } = useSceneRuntime();
   const { go } = useSceneManager();
-  const [clock, setClock] = useState("");
 
   useGSAP(
     () => {
@@ -68,19 +67,6 @@ function FooterContentBlock({ content }: { content: FooterContent }) {
       if (frame) window.cancelAnimationFrame(frame);
     };
   }, []);
-
-  useEffect(() => {
-    const format = new Intl.DateTimeFormat("pt-PT", {
-      timeZone: content.timezone,
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-    const update = () => setClock(format.format(new Date()));
-    update();
-    const timer = window.setInterval(update, 1000);
-    return () => window.clearInterval(timer);
-  }, [content.timezone]);
 
   const animateMark = () => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -194,9 +180,7 @@ function FooterContentBlock({ content }: { content: FooterContent }) {
 
         <div className="footer-base">
           <p className="footer-base__legal">{content.legal}</p>
-          <p className="footer-base__clock" aria-live="off">
-            {clock || "--:--:--"}
-          </p>
+          <FooterClock timezone={content.timezone} />
           <button
             type="button"
             className="footer-base__back"
@@ -216,6 +200,29 @@ function FooterContentBlock({ content }: { content: FooterContent }) {
         </div>
       </section>
     </div>
+  );
+}
+
+function FooterClock({ timezone }: { timezone: string }) {
+  const [clock, setClock] = useState("");
+
+  useEffect(() => {
+    const format = new Intl.DateTimeFormat("pt-PT", {
+      timeZone: timezone,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    const update = () => setClock(format.format(new Date()));
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, [timezone]);
+
+  return (
+    <p className="footer-base__clock" aria-live="off">
+      {clock || "--:--:--"}
+    </p>
   );
 }
 

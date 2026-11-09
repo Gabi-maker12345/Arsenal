@@ -1,10 +1,9 @@
 "use client";
 
-import { useId, useMemo, useState, type CSSProperties } from "react";
-import { useRef } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useGSAP } from "@gsap/react";
 import { NODE_COUNTERS, NODE_LABEL_POINTS, NODE_POINTS } from "@/lib/scenes";
-import { createHubLogoAnimation } from "./hub-logo.anim";
+import { createHubLogoAnimation, type HubController } from "./hub-logo.anim";
 import { HUB_LOGO_SVG, scopeHubLogoSvg } from "./hub-logo-markup";
 
 type HubMode = "hero" | "closing" | "loader" | "map";
@@ -12,6 +11,7 @@ type NodeOrigin = { x: number; y: number };
 
 interface HubLogoProps {
   mode?: HubMode;
+  active?: boolean;
   onIntroComplete?: () => void;
   interactive?: boolean;
   variant?: "default" | "map";
@@ -28,6 +28,7 @@ interface HubLogoProps {
  */
 export function HubLogo({
   mode = "hero",
+  active = true,
   onIntroComplete,
   interactive = false,
   variant = "default",
@@ -38,6 +39,7 @@ export function HubLogo({
 }: HubLogoProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const svgHostRef = useRef<HTMLDivElement>(null);
+  const controllerRef = useRef<HubController | null>(null);
   const instanceId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
   const scopedSvg = useMemo(
     () => scopeHubLogoSvg(HUB_LOGO_SVG, `hub-${instanceId}-`),
@@ -67,10 +69,19 @@ export function HubLogo({
         skipIntro: mode === "map",
         onIntroComplete: interactive || onIntroComplete ? handleReady : undefined,
       });
-      return () => controller.destroy();
+      controllerRef.current = controller;
+      if (!active) controller.setActive(false);
+      return () => {
+        controller.destroy();
+        controllerRef.current = null;
+      };
     },
     { scope: stageRef, dependencies: [mode, onIntroComplete, interactive] },
   );
+
+  useEffect(() => {
+    controllerRef.current?.setActive(active);
+  }, [active]);
 
   return (
     <div

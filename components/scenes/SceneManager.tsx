@@ -52,23 +52,18 @@ interface SceneManagerValue {
 
 interface SceneProgressValue {
   progress: number;
+}
+
+interface SceneChargeValue {
   charge: number;
   chargeTarget: SceneId | null;
 }
 
 const SceneContext = createContext<SceneManagerValue | null>(null);
 const SceneProgressContext = createContext<SceneProgressValue | null>(null);
+const SceneChargeContext = createContext<SceneChargeValue | null>(null);
 
 const BASE_TITLE = "Arsenal Gaming Hub — A tua arena, as tuas regras";
-
-function hexClip(cx: number, cy: number, r: number) {
-  return `polygon(${[0, 1, 2, 3, 4, 5]
-    .map((k) => {
-      const angle = ((-90 + 60 * k) * Math.PI) / 180;
-      return `${(cx + r * Math.cos(angle)).toFixed(1)}px ${(cy + r * Math.sin(angle)).toFixed(1)}px`;
-    })
-    .join(",")})`;
-}
 
 function getScroller(id: SceneId) {
   const scene = document.getElementById(id);
@@ -102,7 +97,7 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
   const optionsRef = useRef<SceneGoOptions>({});
   const transitionModeRef = useRef<"portal" | "fade">("portal");
   const transitionRef = useRef<gsap.core.Timeline | null>(null);
-  const frontRef = useRef<SVGPolygonElement>(null);
+  const coverRef = useRef<HTMLDivElement>(null);
   const lastArrivalRef = useRef(0);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const chargeRef = useRef({ value: 0, direction: null as "next" | "prev" | null, timer: 0 });
@@ -151,9 +146,11 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
 
       if (target) {
         target.style.clipPath = "none";
-        target.style.willChange = "auto";
+        target.style.removeProperty("will-change");
+        gsap.set(target, {
+          clearProps: "opacity,visibility,transform",
+        });
       }
-      if (frontRef.current) gsap.set(frontRef.current, { autoAlpha: 0 });
       if (previousContent) {
         gsap.set(previousContent, { clearProps: "transform,opacity,visibility" });
       }
@@ -206,7 +203,6 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
       if (scroller) scroller.scrollTop = 0;
       target.style.clipPath = "none";
       target.style.willChange = "auto";
-      if (frontRef.current) gsap.set(frontRef.current, { autoAlpha: 0 });
 
       setSceneUrl(id, replace);
       setAnnouncement(SCENE_LABELS[id]);
@@ -432,70 +428,74 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
       x: window.innerWidth / 2,
       y: window.innerHeight / 2,
     };
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-    const D = Math.max(
-      Math.hypot(origin.x, origin.y),
-      Math.hypot(W - origin.x, origin.y),
-      Math.hypot(origin.x, H - origin.y),
-      Math.hypot(W - origin.x, H - origin.y),
-    );
-    const rMax = D * 1.16;
-    // Abrir já com uma área que inclua o visual-chave da cena de destino.
-    // Sem isto, o portal crescia a partir do marcador e o ecrã ficava escuro
-    // enquanto o centro da cena ainda estava fora do recorte (N8).
-    const startR = Math.min(rMax * 0.42, 520);
-    const state = { r: startR };
-    const front = frontRef.current;
+    const cover = coverRef.current;
+    const coverFill = cover?.querySelector<HTMLElement>(".scene-cover__fill");
 
     if (targetContent) gsap.set(targetContent, { autoAlpha: 1 });
     target.dispatchEvent(new CustomEvent(SCENE_VISUAL_EVENT));
-    if (currentContent) {
-      gsap.to(currentContent, {
-        yPercent: -6,
-        autoAlpha: 0,
-        duration: MOTION.ui,
-        ease: MOTION.ease.exit,
-        overwrite: true,
-      });
+
+    // A cena de destino fica pronta por baixo do hexágono; não se anima a
+    // opacidade/transform de uma cena full-screen (isso forçava rasterização
+    // pesada em cada frame). O único elemento animado é a cobertura.
+    gsap.set(target, { autoAlpha: 0 });
+
+    if (!cover) {
+      gsap.set(target, { autoAlpha: 1 });
+      target.dispatchEvent(new CustomEvent(SCENE_ENTER_EVENT));
+      const fallback = gsap.timeline({ onComplete: () => finish(id) });
+      transitionRef.current = fallback;
+      return () => fallback.kill();
     }
-    if (front) gsap.set(front, { autoAlpha: 1 });
-    target.style.clipPath = hexClip(origin.x, origin.y, startR);
-    target.style.willChange = "clip-path";
+
+    cover.style.clipPath = "";
+    if (coverFill) coverFill.style.clipPath = "";
+    gsap.set(cover, {
+      autoAlpha: 1,
+      scale: 0.16,
+      transformOrigin: `${origin.x}px ${origin.y}px`,
+      willChange: "transform, opacity",
+    });
+    target.style.clipPath = "none";
 
     const timeline = gsap.timeline({
       onComplete: () => finish(id),
     });
 
-    timeline.to(state, {
-      r: rMax,
-      duration: MOTION.portal,
-      ease: MOTION.ease.io,
-      onUpdate: () => {
-        target.style.clipPath = hexClip(origin.x, origin.y, state.r);
-        if (front) {
-          front.setAttribute(
-            "transform",
-            `translate(${origin.x} ${origin.y}) scale(${state.r / 100})`,
-          );
-        }
-      },
-    });
-
-    timeline.call(
-      () => {
-        target.dispatchEvent(new CustomEvent(SCENE_ENTER_EVENT));
-        ScrollTrigger.refresh();
-      },
-      undefined,
-      0.55,
-    );
-
-    timeline.to(
-      front,
-      { autoAlpha: 0, duration: 0.3, ease: "power1.out" },
-      MOTION.portal * 0.72,
-    );
+    timeline
+      .to(cover, {
+        scale: 2.8,
+        duration: 0.12,
+        ease: "power2.in",
+      }, 0)
+      .call(
+        () => {
+          setActive(id);
+          activeRef.current = id;
+          gsap.set(target, { autoAlpha: 1 });
+          // Depois de coberta a tela, o hexágono vira um retângulo sólido.
+          // O fade final passa a ser uma camada inteira composta, sem
+          // recalcular o clip-path em cada frame.
+          cover.style.clipPath = "none";
+          if (coverFill) coverFill.style.clipPath = "none";
+          target.dispatchEvent(new CustomEvent(SCENE_ENTER_EVENT));
+          ScrollTrigger.refresh();
+        },
+        undefined,
+        0.12,
+      )
+      // Micro-hold com a cobertura opaca: o primeiro paint/rasterização da
+      // cena de destino (imagens, máscaras, canvas) acontece enquanto o ecrã
+      // ainda está tapado, em vez de apanhar o fade visível.
+      .to(cover, {
+        opacity: 0,
+        duration: 0.22,
+        ease: "power2.out",
+      }, 0.22)
+      .set(cover, {
+        autoAlpha: 0,
+        scale: 1,
+        willChange: "auto",
+      }, 0.44);
 
     transitionRef.current = timeline;
 
@@ -592,25 +592,26 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
   );
 
   const progressValue = useMemo<SceneProgressValue>(
-    () => ({ progress, charge, chargeTarget }),
-    [progress, charge, chargeTarget],
+    () => ({ progress }),
+    [progress],
+  );
+  const chargeValue = useMemo<SceneChargeValue>(
+    () => ({ charge, chargeTarget }),
+    [charge, chargeTarget],
   );
 
   return (
     <SceneContext.Provider value={managerValue}>
       <SceneProgressContext.Provider value={progressValue}>
+        <SceneChargeContext.Provider value={chargeValue}>
         {children}
-        <div className="portal-front" aria-hidden="true">
-          <svg width="100%" height="100%">
-            <polygon
-              ref={frontRef}
-              points="0,-100 86.6,-50 86.6,50 0,100 -86.6,50 -86.6,-50"
-            />
-          </svg>
+        <div ref={coverRef} className="scene-cover" aria-hidden="true">
+          <span className="scene-cover__fill" />
         </div>
         <p className="sr-only" aria-live="polite">
           {announcement}
         </p>
+        </SceneChargeContext.Provider>
       </SceneProgressContext.Provider>
     </SceneContext.Provider>
   );
@@ -628,6 +629,15 @@ export function useSceneProgress() {
   const context = useContext(SceneProgressContext);
   if (!context) {
     throw new Error("useSceneProgress deve ser usado dentro de SceneManagerProvider.");
+  }
+  return context;
+}
+
+
+export function useSceneCharge() {
+  const context = useContext(SceneChargeContext);
+  if (!context) {
+    throw new Error("useSceneCharge deve ser usado dentro de SceneManagerProvider.");
   }
   return context;
 }

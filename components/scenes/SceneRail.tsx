@@ -1,13 +1,13 @@
 "use client";
 
 import { SCENE_IDS, SCENE_LABELS, sceneToNode } from "@/lib/scenes";
-import { useSceneManager, useSceneProgress } from "./SceneManager";
+import { useSceneCharge, useSceneManager } from "./SceneManager";
 
 const RAIL_COUNTERS = ["00", "01", "02", "03", "04", "05", "•"] as const;
 
 export function SceneRail() {
   const { active, go } = useSceneManager();
-  const { charge, chargeTarget } = useSceneProgress();
+  const { charge, chargeTarget } = useSceneCharge();
   const activeIndex = SCENE_IDS.indexOf(active);
   const fill = activeIndex / (SCENE_IDS.length - 1);
 

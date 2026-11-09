@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import { GhostButton } from "@/components/landing/GhostButton";
 import { IMAGE_BLUR } from "@/lib/image-placeholders";
@@ -31,6 +31,13 @@ export function SplitScene({ id, content }: SplitSceneProps) {
 function SplitSceneContent({ id, content }: SplitSceneProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const { enterCount, scroller } = useSceneRuntime();
+
+  useEffect(() => {
+    const image = rootRef.current?.querySelector<HTMLImageElement>(
+      ".split-scene__img",
+    );
+    image?.decode().catch(() => {});
+  }, []);
 
   useGSAP(
     () => {

@@ -29,7 +29,7 @@ export function HeroScene({ content }: HeroSceneProps) {
 
 function HeroContentBlock({ content }: HeroSceneProps) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const { enterCount } = useSceneRuntime();
+  const { active, enterCount } = useSceneRuntime();
   const { go } = useSceneManager();
 
   useGSAP(
@@ -114,6 +114,7 @@ function HeroContentBlock({ content }: HeroSceneProps) {
 
       <div className="hero-scene__logo">
         <HubLogo
+          active={active}
           mode="hero"
           interactive
           labels={NODE_MAP.map((id: SceneId) => SCENE_LABELS[id])}

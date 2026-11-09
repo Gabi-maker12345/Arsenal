@@ -735,30 +735,6 @@ html.is-loading body {
   filter: grayscale(1) contrast(1.05);
 }
 
-/* ── Portal hexagonal ─────────────────────────────────── */
-
-.portal-front {
-  position: fixed;
-  inset: 0;
-  z-index: 70;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.portal-front svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-}
-
-.portal-front polygon {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.5;
-  vector-effect: non-scaling-stroke;
-}
-
 /* ── Navbar compacta ──────────────────────────────────── */
 
 .nav {
@@ -1700,22 +1676,27 @@ html.is-loading body {
 .s05-tunnel__svg {
   position: absolute;
   inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  contain: strict;
+  will-change: transform, opacity;
+}
+
+.s05-tunnel__canvas {
+  display: block;
   width: 100%;
   height: 100%;
 }
 
-.s05-ring {
-  fill: none;
-  stroke: var(--ink);
-  stroke-width: 1.2;
-  vector-effect: non-scaling-stroke;
-  opacity: 0;
+.s05-copy {
+  will-change: opacity, transform;
+  backface-visibility: hidden;
 }
 
-.s05-tunnel__ray {
-  stroke: var(--line);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
+.s05-tunnel__indicator-fill {
+  will-change: transform;
 }
 
 .s05-tunnel__mark {
@@ -1746,15 +1727,6 @@ html.is-loading body {
     transparent 72%
   );
   pointer-events: none;
-}
-
-.s05-copy .scene-lead {
-  max-width: 44ch;
-  margin-inline: auto;
-}
-
-.s05-copy .scene-title {
-  font-size: clamp(5.6rem, 7vw, 12rem);
 }
 
 .s05-tunnel__indicator {
@@ -2780,16 +2752,6 @@ html.is-loading body {
   width: 100%;
   height: 100%;
   opacity: 0.72;
-  -webkit-mask-image: radial-gradient(
-    ellipse 82% 82% at 50% 46%,
-    #000 0 38%,
-    transparent 84%
-  );
-  mask-image: radial-gradient(
-    ellipse 82% 82% at 50% 46%,
-    #000 0 38%,
-    transparent 84%
-  );
 }
 
 .s01-scene__scrim {
@@ -2839,14 +2801,12 @@ html.is-loading body {
   line-height: 0.8;
   letter-spacing: -0.04em;
   text-transform: uppercase;
-  mix-blend-mode: difference;
   isolation: isolate;
   pointer-events: none;
   outline: none;
 }
 
-.s01-title__base,
-.s01-title__fill {
+.s01-title__base {
   grid-area: 1 / 1;
   display: block;
   white-space: nowrap;
@@ -2855,11 +2815,6 @@ html.is-loading body {
 .s01-title__base {
   color: transparent;
   -webkit-text-stroke: 1px rgba(234, 233, 229, 0.62);
-}
-
-.s01-title__fill {
-  color: var(--ink);
-  clip-path: inset(0 100% 0 0);
 }
 
 .s01-legend {
@@ -3019,8 +2974,7 @@ html.is-loading body {
   outline: none;
 }
 
-.s03-title__base,
-.s03-title__fill {
+.s03-title__base {
   display: block;
   white-space: nowrap;
 }
@@ -3028,14 +2982,6 @@ html.is-loading body {
 .s03-title__base {
   color: transparent;
   -webkit-text-stroke: 1px rgba(234, 233, 229, 0.6);
-}
-
-.s03-title__fill {
-  position: absolute;
-  inset: 0;
-  color: var(--ink);
-  -webkit-text-stroke: 0;
-  clip-path: inset(100% 0 0 0);
 }
 
 .s03-copy {
@@ -3510,9 +3456,14 @@ html.is-loading body {
   filter: grayscale(1) contrast(1.14) brightness(0.58);
 }
 
-.s01-field__photo,
+.s01-field__photo {
+  filter: none;
+  opacity: 0.8;
+}
+
 .s03-member image {
-  filter: grayscale(1) contrast(1.12) brightness(0.58);
+  filter: none;
+  opacity: 0.82;
 }
 
 /* ── Correções N10 · marcadores do trilho ─────────────── */
@@ -3616,6 +3567,7 @@ html.is-loading body {
 }
 
 .s01-pulse__track {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 28px;
@@ -3854,6 +3806,13 @@ html.is-loading body {
   mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
 }
 
+.s01-avatars__track {
+  display: flex;
+  gap: 0.5rem;
+  width: max-content;
+  animation: s01-avatar-marquee 30s linear infinite;
+}
+
 .s01-avatars__item {
   display: block;
   width: 24px;
@@ -3863,7 +3822,6 @@ html.is-loading body {
   background-position: center;
   clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
   filter: grayscale(1) brightness(0.62);
-  animation: s01-avatar-marquee 30s linear infinite;
 }
 
 @keyframes s01-avatar-marquee {
@@ -3917,7 +3875,7 @@ html.is-loading body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .s01-avatars__item {
+  .s01-avatars__track {
     animation: none;
   }
 }
@@ -3995,8 +3953,7 @@ html.is-loading body {
   outline: none;
 }
 
-.s03-title__base,
-.s03-title__fill {
+.s03-title__base {
   display: block;
   white-space: nowrap;
 }
@@ -4004,14 +3961,6 @@ html.is-loading body {
 .s03-title__base {
   color: transparent;
   -webkit-text-stroke: 1px rgba(234, 233, 229, 0.6);
-}
-
-.s03-title__fill {
-  position: absolute;
-  inset: 0;
-  color: var(--ink);
-  -webkit-text-stroke: 0;
-  clip-path: inset(100% 0 0 0);
 }
 
 .s03-copy {
@@ -4133,6 +4082,7 @@ html.is-loading body {
 
 .s03-stack-card {
   position: absolute;
+  will-change: transform, opacity;
   top: 50%;
   left: 50%;
   z-index: 1;
@@ -4392,14 +4342,6 @@ html.is-loading body {
 .s05-tunnel__ray {
   stroke: var(--accent);
   opacity: 0.28;
-}
-
-.s05-signal {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.2;
-  vector-effect: non-scaling-stroke;
-  opacity: 0;
 }
 
 .s05-manifesto__line {
@@ -4737,4 +4679,155 @@ html.is-loading body {
     flex: none;
     grid-auto-rows: minmax(190px, auto);
   }
+}
+
+/* ── Fluidez: pausar loops fora da cena ativa ─────────── */
+
+.scene[data-active="false"] .hero-scene__marquee-track,
+.scene[data-active="false"] .s01-avatars__track,
+.scene[data-active="false"] .footer-a__dots,
+.scene[data-active="false"] .hub-node__hit.is-beacon .hub-node__ring,
+.scene[data-active="false"] .scroll-hint__hex {
+  animation-play-state: paused;
+}
+
+/* O spotlight é uma camada fixa deslocada por transform. Evita recalcular
+   um gradiente full-screen a cada pointermove. */
+.scene__fx {
+  background: none;
+}
+
+.scene__fx::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 900px;
+  height: 900px;
+  margin: -450px 0 0 -450px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.055),
+    transparent 65%
+  );
+  transform: translate3d(var(--mx, 50vw), var(--my, 50vh), 0);
+  pointer-events: none;
+}
+
+.scene[data-active="true"] .scene__fx::before {
+  will-change: transform;
+}
+
+.scene__fx::after {
+  animation: none;
+}
+
+.lowfx .scene__fx::before,
+.lowfx .scene__fx::after {
+  display: none;
+}
+
+/* ── 03 · camada composta e sem filtros por frame ─────── */
+
+.s03-hub {
+  will-change: transform;
+  backface-visibility: hidden;
+}
+
+.s03-member image {
+  filter: none;
+  opacity: 0.82;
+}
+
+/* ── Transição: cobertura hexagonal composta ──────────── */
+
+.scene-cover {
+  position: fixed;
+  inset: 0;
+  z-index: 75;
+  background: var(--accent);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  will-change: transform, opacity;
+  transform-origin: 50% 50%;
+}
+
+.scene-cover__fill {
+  position: absolute;
+  inset: 1px;
+  background: var(--bg-deep);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+}
+
+/* O hub inteiro é uma camada HTML: o SVG fica estático dentro dela e a
+   rotação/escala do scroll é composta, sem re-rasterizar os seis membros. */
+.s03-hub-wrap {
+  width: max(120vh, 90vw);
+  margin-top: 8vh;
+  backface-visibility: hidden;
+}
+
+.scene[data-active="true"] .s03-hub-wrap {
+  will-change: transform;
+}
+
+.s03-hub-wrap .s03-hub {
+  width: 100%;
+  height: auto;
+  margin-top: 0;
+  will-change: auto;
+}
+
+@media (max-width: 899px) {
+  .s03-hub-wrap {
+    width: max(110vh, 150vw);
+    margin-top: 14vh;
+  }
+
+  .s03-hub-wrap .s03-hub {
+    width: 100%;
+    margin-top: 0;
+  }
+}
+
+
+/* O palco gira como uma animação CSS composta; o scroll não escreve
+   transform no SVG grande em cada frame. */
+.s03-hub-wrap {
+  animation: s03-hub-drift 28s ease-in-out infinite alternate;
+}
+
+@keyframes s03-hub-drift {
+  from { transform: rotate(0deg) scale(1); }
+  to { transform: rotate(60deg) scale(1.18); }
+}
+
+.scene[data-active="false"] .s03-hub-wrap {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .s03-hub-wrap {
+    animation: none;
+  }
+}
+
+/* Visuais grandes não ficam montados a pintar nas cenas inativas. */
+.scene[data-active="false"] .s01-field,
+.scene[data-active="false"] .s03-hub-wrap,
+.scene[data-active="false"] .s05-tunnel__svg {
+  display: none;
+}
+
+.scene[data-active="false"] .s01-stage {
+  display: none;
+}
+
+.scene[data-active="false"] .s01-stage,
+.scene[data-active="false"] .s01-pulse__stage,
+.scene[data-active="false"] .s01-part-c {
+  display: none;
 }

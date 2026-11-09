@@ -41,6 +41,10 @@ const BARS = Array.from({ length: 72 }, (_, index) => {
   };
 });
 
+const BAR_GROUPS = Array.from({ length: 8 }, (_, group) =>
+  BARS.filter((bar) => bar.index % 8 === group),
+);
+
 export function MiniHubScene({ content }: { content: S03 }) {
   return (
     <Scene id="s03">
@@ -51,10 +55,8 @@ export function MiniHubScene({ content }: { content: S03 }) {
 
 function MiniHubContent({ content }: { content: S03 }) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const partARef = useRef<HTMLDivElement>(null);
   const partBRef = useRef<HTMLElement>(null);
   const partCRef = useRef<HTMLElement>(null);
-  const hubRef = useRef<SVGSVGElement>(null);
   const memberRefs = useRef<(SVGGElement | null)[]>([]);
   const [speaker, setSpeaker] = useState<number | null>(null);
   const pausedUntilRef = useRef(0);
@@ -68,45 +70,6 @@ function MiniHubContent({ content }: { content: S03 }) {
         (member): member is SVGGElement => Boolean(member),
       );
       if (reduced) return;
-
-      const timeline = gsap.timeline();
-      timeline
-        .from(".s03-room", {
-          drawSVG: "0% 0%",
-          duration: 0.9,
-          ease: "power2.inOut",
-        })
-        .from(
-          ".s03-spoke",
-          {
-            drawSVG: "0% 0%",
-            duration: 0.55,
-            ease: "power4.out",
-            stagger: 0.07,
-          },
-          0,
-        )
-        .from(
-          members,
-          {
-            scale: 0,
-            duration: 0.55,
-            ease: "back.out(2.2)",
-            transformOrigin: "50% 50%",
-            stagger: 0.07,
-          },
-          0.25,
-        )
-        .from(
-          ".s03-wave-ring",
-          { scale: 0, opacity: 0, duration: 0.9, ease: "expo.out" },
-          0.3,
-        )
-        .from(
-          ".s03-wave-bar",
-          { opacity: 0, duration: 0.4, stagger: 0.006 },
-          0.5,
-        );
 
       let previous = -1;
       let timer = 0;
@@ -154,11 +117,11 @@ function MiniHubContent({ content }: { content: S03 }) {
             .to(spoke, { opacity: 0.15, duration: 1.2, ease: "power2.in" });
         }
 
-        gsap.to(".s03-wave-bar", {
-          opacity: () => 0.35 + Math.random() * 0.65,
-          duration: 1.2,
+        gsap.to(".s03-wave-group", {
+          opacity: () => 0.3 + Math.random() * 0.7,
+          duration: 1.1,
           ease: "power2.out",
-          stagger: { each: 0.006, from: "random" },
+          stagger: { each: 0.035, from: "random" },
         });
       };
 
@@ -170,7 +133,6 @@ function MiniHubContent({ content }: { content: S03 }) {
       return () => {
         window.clearTimeout(timer);
         window.clearInterval(interval);
-        timeline.kill();
       };
     },
     { scope: rootRef, dependencies: [visualCount, active] },
@@ -201,49 +163,6 @@ function MiniHubContent({ content }: { content: S03 }) {
       return () => timeline.kill();
     },
     { scope: rootRef, dependencies: [visualCount] },
-  );
-
-  useGSAP(
-    () => {
-      if (!scroller || !partARef.current || !rootRef.current) return;
-      const part = partARef.current;
-      const hub = hubRef.current;
-      const fill = rootRef.current.querySelector<HTMLElement>(".s03-title__fill");
-      const members = memberRefs.current.filter(
-        (member): member is SVGGElement => Boolean(member),
-      );
-      if (!hub || !fill) return;
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      if (reduced) {
-        fill.style.clipPath = "inset(0 0 0 0)";
-        return;
-      }
-      const trigger = ScrollTrigger.create({
-        trigger: part,
-        scroller,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: 1,
-        onUpdate: (self) => {
-          const p = self.progress;
-          gsap.set(hub, {
-            rotation: p * 120,
-            scale: 1 + p * 0.5,
-            transformOrigin: "50% 50%",
-          });
-          members.forEach((member) =>
-            gsap.set(member, {
-              rotation: -p * 120,
-              transformOrigin: "50% 50%",
-            }),
-          );
-          const fillProgress = Math.min(1, Math.max(0, (p - 0.12) / 0.68));
-          fill.style.clipPath = `inset(${(1 - fillProgress) * 100}% 0 0 0)`;
-        },
-      });
-      return () => trigger.kill();
-    },
-    { scope: rootRef, dependencies: [scroller] },
   );
 
   useGSAP(
@@ -314,8 +233,8 @@ function MiniHubContent({ content }: { content: S03 }) {
           {
             y: edge ? 60 : 42,
             opacity: 0,
-            rotateX: edge ? 12 : 7,
-            duration: 0.9,
+            scale: edge ? 0.985 : 1,
+            duration: 0.8,
             ease: "power3.out",
           },
           index * 0.07,
@@ -389,11 +308,11 @@ function MiniHubContent({ content }: { content: S03 }) {
 
   return (
     <div className="s03-scene" ref={rootRef}>
-      <div className="s03-part-a" ref={partARef}>
+      <div className="s03-part-a">
         <div className="s03-stage">
           <div className="s03-visual">
+            <div className="s03-hub-wrap">
             <svg
-              ref={hubRef}
               className="s03-hub"
               viewBox="0 0 1000 1000"
               aria-hidden="true"
@@ -425,15 +344,19 @@ function MiniHubContent({ content }: { content: S03 }) {
               })}
 
               <circle className="s03-wave-ring" cx={CENTER} cy={CENTER} r="120" />
-              {BARS.map((bar) => (
-                <line
-                  key={bar.index}
-                  className="s03-wave-bar"
-                  x1={bar.x1}
-                  y1={bar.y1}
-                  x2={bar.x2}
-                  y2={bar.y2}
-                />
+              {BAR_GROUPS.map((group, groupIndex) => (
+                <g className="s03-wave-group" key={`wave-${groupIndex}`}>
+                  {group.map((bar) => (
+                    <line
+                      key={bar.index}
+                      className="s03-wave-bar"
+                      x1={bar.x1}
+                      y1={bar.y1}
+                      x2={bar.x2}
+                      y2={bar.y2}
+                    />
+                  ))}
+                </g>
               ))}
 
               {content.members.map((member, index) => {
@@ -470,6 +393,7 @@ function MiniHubContent({ content }: { content: S03 }) {
                 );
               })}
             </svg>
+            </div>
           </div>
 
           <p className="s03-micro">(03)</p>
@@ -483,9 +407,6 @@ function MiniHubContent({ content }: { content: S03 }) {
               aria-label={content.title}
             >
               <span className="s03-title__base" aria-hidden="true">
-                {content.title}
-              </span>
-              <span className="s03-title__fill" aria-hidden="true">
                 {content.title}
               </span>
             </h2>

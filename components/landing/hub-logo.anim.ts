@@ -26,7 +26,10 @@ const NODE_RADIUS = 266;
 const CENTER = 500;
 const COARSE_QUERY = "(pointer: coarse)";
 
-type HubController = { destroy(): void };
+export type HubController = {
+  destroy(): void;
+  setActive: (active: boolean) => void;
+};
 
 type HubDebug = {
   seekIntro: (seconds: number) => void;
@@ -49,7 +52,7 @@ export function createHubLogoAnimation(
   } = {},
 ): HubController {
   const stage = svg.closest<HTMLElement>("[data-hub-stage]");
-  if (!stage) return { destroy() {} };
+  if (!stage) return { destroy() {}, setActive() {} };
 
   const q = <T extends Element = SVGElement>(selector: string) =>
     svg.querySelector<T>(selector);
@@ -93,7 +96,7 @@ export function createHubLogoAnimation(
     !hudTicks ||
     !hudArcs
   ) {
-    return { destroy() {} };
+    return { destroy() {}, setActive() {} };
   }
 
   const hero = stage.closest<HTMLElement>("section") ?? stage.parentElement ?? stage;
@@ -102,6 +105,7 @@ export function createHubLogoAnimation(
   let intro: gsap.core.Timeline | null = null;
   let idle: gsap.core.Timeline | null = null;
   let phase: "intro" | "idle" = "intro";
+  let setActiveImpl: (active: boolean) => void = () => {};
   let visible = true;
   let coarseMode = false;
   let sparkCursor = 0;
@@ -737,8 +741,12 @@ export function createHubLogoAnimation(
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      setActiveImpl = () => {};
       mm.revert();
       gsap.killTweensOf(sparks);
+    },
+    setActive(active: boolean) {
+      setActiveImpl(active);
     },
   };
 }
