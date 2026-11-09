@@ -4794,27 +4794,6 @@ html.is-loading body {
 }
 
 
-/* O palco gira como uma animação CSS composta; o scroll não escreve
-   transform no SVG grande em cada frame. */
-.s03-hub-wrap {
-  animation: s03-hub-drift 28s ease-in-out infinite alternate;
-}
-
-@keyframes s03-hub-drift {
-  from { transform: rotate(0deg) scale(1); }
-  to { transform: rotate(60deg) scale(1.18); }
-}
-
-.scene[data-active="false"] .s03-hub-wrap {
-  animation-play-state: paused;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .s03-hub-wrap {
-    animation: none;
-  }
-}
-
 /* Visuais grandes não ficam montados a pintar nas cenas inativas. */
 .scene[data-active="false"] .s01-field,
 .scene[data-active="false"] .s05-tunnel__svg {
@@ -4829,4 +4808,38 @@ html.is-loading body {
 .scene[data-active="false"] .s01-pulse__stage,
 .scene[data-active="false"] .s01-part-c {
   display: none;
+}
+
+/* Footer no estado anterior: letras e logo (hub completo) a branco sólido. */
+.footer-wordmark {
+  color: var(--ink);
+  -webkit-text-stroke: 0;
+}
+
+.footer-wordmark__mark-wrap {
+  position: relative;
+  width: 0.72em;
+  height: 0.72em;
+  flex: none;
+}
+
+.footer-wordmark__mark-full,
+.footer-wordmark__mark-full svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.footer-wordmark__mark-full {
+  color: var(--ink);
+}
+
+.footer-wordmark__text {
+  color: var(--ink);
+  -webkit-text-stroke: 0;
+}
+
+.s03-member image {
+  filter: grayscale(1);
 }

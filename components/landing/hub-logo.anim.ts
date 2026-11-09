@@ -239,11 +239,11 @@ export function createHubLogoAnimation(
     gsap.set(spokes, { scaleX: 0 });
     gsap.set(nodePops, { scale: 0 });
     gsap.set(edges, { drawSVG: "0% 0%" });
-    gsap.set([aTop, aBody, shardBL, shardTR], { opacity: 0 });
-    gsap.set(aTop, { x: -U.x * 60, y: -U.y * 60 });
-    gsap.set(aBody, { x: U.x * 40, y: U.y * 40 });
-    gsap.set(shardBL, { x: -U.x * 110, y: -U.y * 110 });
-    gsap.set(shardTR, { x: U.x * 110, y: U.y * 110 });
+    gsap.set([aTop, aBody, shardBL, shardTR], {
+      opacity: 0,
+      x: 0,
+      y: 0,
+    });
     gsap.set(aura, { opacity: 0 });
     gsap.set(hudTicks, { opacity: 0 });
     gsap.set(hudArcPaths, { opacity: 0 });
@@ -531,14 +531,9 @@ export function createHubLogoAnimation(
 
     introTl
       .to(
-        [shardBL, shardTR],
-        { x: 0, y: 0, opacity: 1, duration: 0.6, ease: "expo.out" },
+        [aTop, aBody, shardBL, shardTR],
+        { opacity: 1, duration: 1.2, ease: "power2.out" },
         0,
-      )
-      .to(
-        [aTop, aBody],
-        { x: 0, y: 0, opacity: 1, duration: 0.6, ease: "power4.out" },
-        0.05,
       )
       .fromTo(seam, { opacity: 0 }, { opacity: 1, duration: 0.08 }, 0.3)
       .to(seam, { opacity: 0.3, duration: 0.5 }, 0.38)

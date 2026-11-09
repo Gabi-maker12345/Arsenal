@@ -10,6 +10,7 @@ import { useSceneManager } from "./SceneManager";
 
 const VIEW_W = 1440;
 const VIEW_H = 900;
+const PULSE_DEPTHS = [-0.15, -0.45, -0.9, -1.3];
 interface Tile {
   id: number;
   x: number;
@@ -147,11 +148,11 @@ function HexFieldContent({ content }: { content: S01 }) {
       timeline
         .from(
           title,
-          { yPercent: 12, opacity: 0, duration: 1, ease: "expo.out" },
+          { yPercent: 12, opacity: 0, duration: 1.3, ease: "expo.out" },
           0.25,
         )
-        .from(legend, { y: 18, opacity: 0, duration: 0.65, ease: "power3.out" }, 0.6)
-        .from(cta, { y: 18, opacity: 0, duration: 0.65, ease: "power3.out" }, 0.7);
+        .from(legend, { y: 18, opacity: 0, duration: 0.9, ease: "power3.out" }, 0.6)
+        .from(cta, { y: 18, opacity: 0, duration: 0.9, ease: "power3.out" }, 0.7);
 
       const photoGroups = field
         ? Array.from(
@@ -219,9 +220,17 @@ function HexFieldContent({ content }: { content: S01 }) {
       if (!scroller || !partARef.current || !rootRef.current) return;
       const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const title = rootRef.current.querySelector<HTMLElement>(".s01-title");
+      const base = rootRef.current.querySelector<HTMLElement>(".s01-title__base");
       const zoom = rootRef.current.querySelector<HTMLElement>(".s01-zoom");
       const field = rootRef.current.querySelector<SVGSVGElement>(".s01-field");
       if (reduced) return;
+      const layers = PULSE_DEPTHS.map((speed, depth) => ({
+        speed,
+        nodes: gsap.utils.toArray<SVGGElement>(
+          `.s01-field__tile[data-depth="${depth}"]`,
+          rootRef.current,
+        ),
+      }));
 
       const trigger = ScrollTrigger.create({
         trigger: partARef.current,
@@ -231,6 +240,18 @@ function HexFieldContent({ content }: { content: S01 }) {
         scrub: true,
         onUpdate: (self) => {
           const p = self.progress;
+
+          if (base) {
+            const fillProgress = Math.min(1, Math.max(0, (p - 0.08) / 0.62));
+            base.style.color = `rgba(242, 241, 237, ${fillProgress})`;
+          }
+          layers.forEach((layer) => {
+            layer.nodes.forEach((node) => {
+              gsap.set(node, {
+                y: (p - 0.5) * window.innerHeight * layer.speed,
+              });
+            });
+          });
 
           if (title) {
             if (p > 0.72) {

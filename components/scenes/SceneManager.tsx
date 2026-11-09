@@ -464,8 +464,8 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
     timeline
       .to(cover, {
         scale: 2.8,
-        duration: 0.12,
-        ease: "power2.in",
+        duration: 0.38,
+        ease: "power2.inOut",
       }, 0)
       .call(
         () => {
@@ -481,21 +481,21 @@ export function SceneManagerProvider({ children }: { children: ReactNode }) {
           ScrollTrigger.refresh();
         },
         undefined,
-        0.12,
+        0.38,
       )
-      // Micro-hold com a cobertura opaca: o primeiro paint/rasterização da
-      // cena de destino (imagens, máscaras, canvas) acontece enquanto o ecrã
-      // ainda está tapado, em vez de apanhar o fade visível.
+      // Hold com a cobertura opaca: o primeiro paint/rasterização da cena
+      // de destino acontece enquanto o ecrã ainda está tapado; o fade final
+      // é mais longo para uma sensação de fluidez, não de corte.
       .to(cover, {
         opacity: 0,
-        duration: 0.22,
-        ease: "power2.out",
-      }, 0.22)
+        duration: 0.55,
+        ease: "power2.inOut",
+      }, 0.52)
       .set(cover, {
         autoAlpha: 0,
         scale: 1,
         willChange: "auto",
-      }, 0.44);
+      }, 1.07);
 
     transitionRef.current = timeline;
 

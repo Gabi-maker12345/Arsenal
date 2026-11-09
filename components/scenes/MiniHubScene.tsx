@@ -55,6 +55,8 @@ export function MiniHubScene({ content }: { content: S03 }) {
 
 function MiniHubContent({ content }: { content: S03 }) {
   const rootRef = useRef<HTMLDivElement>(null);
+  const partARef = useRef<HTMLDivElement>(null);
+  const hubRef = useRef<HTMLDivElement>(null);
   const partBRef = useRef<HTMLElement>(null);
   const partCRef = useRef<HTMLElement>(null);
   const memberRefs = useRef<(SVGGElement | null)[]>([]);
@@ -149,20 +151,64 @@ function MiniHubContent({ content }: { content: S03 }) {
       if (reduced) return;
       const timeline = gsap.timeline({ delay: 0.35 });
       timeline
-        .from(title, { opacity: 0, y: 24, duration: 1, ease: "expo.out" })
+        .from(title, { opacity: 0, y: 24, duration: 1.3, ease: "expo.out" })
         .from(
           copy,
           {
             clipPath: "inset(0 0 100% 0)",
-            duration: 0.7,
+            duration: 1,
             ease: "power3.out",
           },
           0.35,
         )
-        .from(cta, { opacity: 0, y: 20, duration: 0.7, ease: "power3.out" }, 0.45);
+        .from(cta, { opacity: 0, y: 20, duration: 1, ease: "power3.out" }, 0.45);
       return () => timeline.kill();
     },
     { scope: rootRef, dependencies: [visualCount] },
+  );
+
+  useGSAP(
+    () => {
+      if (!scroller || !partARef.current || !hubRef.current || !rootRef.current) {
+        return;
+      }
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const base = rootRef.current.querySelector<HTMLElement>(".s03-title__base");
+      const members = memberRefs.current.filter(
+        (member): member is SVGGElement => Boolean(member),
+      );
+      if (reduced) {
+        if (base) base.style.color = "var(--ink)";
+        return;
+      }
+      const trigger = ScrollTrigger.create({
+        trigger: partARef.current,
+        scroller,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 1,
+        onUpdate: (self) => {
+          const p = self.progress;
+          gsap.set(hubRef.current, {
+            rotation: p * 120,
+            scale: 1 + p * 0.5,
+            transformOrigin: "50% 50%",
+          });
+          members.forEach((member) =>
+            gsap.set(member, {
+              rotation: -p * 120,
+              transformOrigin: "50% 50%",
+            }),
+          );
+          if (base) {
+            const fillProgress = Math.min(1, Math.max(0, (p - 0.08) / 0.72));
+            base.style.color = `rgba(242, 241, 237, ${fillProgress})`;
+          }
+        },
+      });
+      return () => trigger.kill();
+    },
+    { scope: rootRef, dependencies: [scroller] },
   );
 
   useGSAP(
@@ -308,10 +354,10 @@ function MiniHubContent({ content }: { content: S03 }) {
 
   return (
     <div className="s03-scene" ref={rootRef}>
-      <div className="s03-part-a">
+      <div className="s03-part-a" ref={partARef}>
         <div className="s03-stage">
           <div className="s03-visual">
-            <div className="s03-hub-wrap">
+            <div className="s03-hub-wrap" ref={hubRef}>
             <svg
               className="s03-hub"
               viewBox="0 0 1000 1000"

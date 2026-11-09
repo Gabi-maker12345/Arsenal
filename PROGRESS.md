@@ -13,6 +13,16 @@
 - **Frame:** relógio isolado (`FooterClock`), progresso/charge separados no contexto, anel da navbar isolado num subcomponente e `useSceneCharge` no trilho (sem re-render por frame), decode das imagens split.
 - **Layout:** inalterado nesta revisão (apenas animações/transições e o filtro de cor das imagens da 03). `tsc`, `lint` e build de produção verdes.
 
+### Revisão 11 — restauro dos efeitos pedidos
+
+- **01:** preenchimento branco do título de novo ativo, feito agora numa única camada (`color` do span base interpolado com o scroll, sem segunda camada de texto); parallax de profundidade do campo e zoom-through restaurados. O campo continua sem máscara radial.
+- **03:** preenchimento branco do título (mesma técnica de uma camada), rotação/escala do hub e contra-rotação dos seis membros ligadas ao scroll de novo; o drift CSS foi removido. Filtro `grayscale(1)` reposto nas fotos dos membros.
+- **Footer:** wordmark todo a branco sólido e com a **logo hub completa** (o logo anterior) no lugar da marca mini; overlay de preenchimento por proximidade removido.
+- **A:** a entrada das peças do A no HubLogo passou a um **fade-in de 1,2 s** (`opacity`, sem deslocamento das shards), no hero e no loader.
+- **Transições mais lentas:** cobertura hexagonal 0,38 s de entrada + 0,14 s opaca + 0,55 s de fade (≈1,07 s); `MOTION.reveal/rise/ui` aumentados; entradas de título/copy da 01/03 alongadas.
+- **Intro:** mantém-se a deteção por Navigation Timing — antiga em `navigate`, curta só em `reload`.
+- **Custo:** 01 A/B/C continuam 16,7 ms / 0 drops; 03 C 16,7; 03 B ~18,8; 03 A ~32,5 com o hub/contra-rotação/filtro restaurados; 05 e footer 16,7; transições ~16,7 ms exceto o primeiro paint do canvas em s04→s05 (~21,5).
+
 ### Ajustes finais (segunda passagem de fluidez)
 
 - O preenchimento animado dos títulos 01/03 e o `mix-blend-mode: difference` do título 01 foram removidos: eram repinturas de texto full-screen a cada scroll. Os títulos ficam em contorno, com entrada única de opacidade/posição. O campo da 01, o hub da 03 e o túnel da 05 são desmontados (`display:none`) nas cenas inativas.

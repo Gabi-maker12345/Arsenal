@@ -1,12 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "@/lib/gsap";
 import { initReveals } from "@/lib/reveals";
 import type { FooterContent } from "@/content/schema";
-import { BrandMark } from "./BrandMark";
+import { HUB_LOGO_SVG, scopeHubLogoSvg } from "@/components/landing/hub-logo-markup";
 import { Scene, useSceneRuntime } from "./Scene";
 import { ScrollHint } from "./ScrollHint";
 import { useSceneManager } from "./SceneManager";
@@ -21,11 +21,15 @@ export function FooterScene({ content }: { content: FooterContent }) {
 
 function FooterContentBlock({ content }: { content: FooterContent }) {
   const rootRef = useRef<HTMLDivElement>(null);
-  const markRef = useRef<SVGSVGElement>(null);
   const wordmarkRef = useRef<HTMLDivElement>(null);
   const wordmarkInnerRef = useRef<HTMLSpanElement>(null);
   const { enterCount, scroller } = useSceneRuntime();
   const { go } = useSceneManager();
+  const wordmarkId = useId().replace(/[^a-zA-Z0-9_-]/g, "");
+  const wordmarkLogo = useMemo(
+    () => scopeHubLogoSvg(HUB_LOGO_SVG, `footer-${wordmarkId}-`),
+    [wordmarkId],
+  );
 
   useGSAP(
     () => {
@@ -68,34 +72,6 @@ function FooterContentBlock({ content }: { content: FooterContent }) {
     };
   }, []);
 
-  const animateMark = () => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const svg = markRef.current;
-    if (!svg) return;
-    const ring = svg.querySelector<SVGElement>(".mm-ring");
-    const inner = svg.querySelector<SVGElement>(".mm-inner");
-    if (!ring || !inner) return;
-    gsap.killTweensOf([ring, inner]);
-    gsap
-      .timeline()
-      .to(ring, {
-        rotation: 60,
-        svgOrigin: "500 500",
-        duration: 1,
-        ease: "back.inOut(1.4)",
-      })
-      .to(
-        inner,
-        {
-          rotation: -60,
-          svgOrigin: "500 500",
-          duration: 1,
-          ease: "power3.inOut",
-        },
-        0,
-      )
-      .set([ring, inner], { rotation: 0, svgOrigin: "500 500" });
-  };
 
   return (
     <div className="footer-scene" ref={rootRef}>
@@ -146,34 +122,17 @@ function FooterContentBlock({ content }: { content: FooterContent }) {
           ref={wordmarkRef}
           className="footer-wordmark"
           data-reveal="rise"
-          onPointerEnter={animateMark}
-          onPointerMove={(event) => {
-            const rect = event.currentTarget.getBoundingClientRect();
-            event.currentTarget.style.setProperty(
-              "--mx",
-              `${event.clientX - rect.left}px`,
-            );
-            event.currentTarget.style.setProperty(
-              "--my",
-              `${event.clientY - rect.top}px`,
-            );
-          }}
-          onPointerLeave={(event) => {
-            event.currentTarget.style.setProperty("--mx", "-400px");
-            event.currentTarget.style.setProperty("--my", "-400px");
-          }}
         >
           <span className="sr-only">Arsenal</span>
           <span ref={wordmarkInnerRef} className="footer-wordmark__inner">
             <span className="footer-wordmark__mark-wrap" aria-hidden="true">
-              <BrandMark ref={markRef} className="footer-wordmark__mark" />
-              <span className="footer-wordmark__mark-fill">
-                <BrandMark className="footer-wordmark__mark-fill-svg" />
-              </span>
+              <span
+                className="footer-wordmark__mark-full"
+                dangerouslySetInnerHTML={{ __html: wordmarkLogo }}
+              />
             </span>
             <span className="footer-wordmark__text-wrap" aria-hidden="true">
               <span className="footer-wordmark__text">RSENAL</span>
-              <span className="footer-wordmark__fill">RSENAL</span>
             </span>
           </span>
         </div>

@@ -3,9 +3,9 @@ export const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 /** Valores únicos para a navegação por cenas. O dono afina aqui. */
 export const MOTION = {
   micro: 0.25,
-  ui: 0.5,
-  reveal: 1,
-  rise: 0.9,
+  ui: 0.65,
+  reveal: 1.3,
+  rise: 1.1,
   portal: 1.15,
   stagger: {
     lines: 0.09,
