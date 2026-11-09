@@ -30,7 +30,7 @@
 - **N10:** marcadores hexagonais de 14 px, contorno `rgba(255,255,255,.38)`, passados `.7`, ativo `#f2f1ed`; o indicador de dev do Next está desligado (`devIndicators: false`).
 - **N11:** `content/dev-fixtures.ts` carregado por `NEXT_PUBLIC_FIXTURES=1`; o build local não mostra `{{slot}}` (`slots: []` nos testes). `?slots=1` não foi implementado.
 - **N12:** hint de scroll em 01/03/footer; desaparece ao primeiro scroll.
-- **Intro:** primeira visita de cada browser usa a cortina/logo antiga (≈13 s) e grava `arsenal-intro-seen` em `localStorage`; recargas seguintes usam a entrada curta marca+progresso (≈2 s).
+- **Intro:** cada abertura/navegação (`navigate`, incluindo fechar e reabrir) usa a cortina/logo antiga (≈13 s); apenas um **reload** (`PerformanceNavigationTiming.type === "reload"`) usa a entrada curta marca+progresso (≈2 s). Sem `localStorage`/chave persistente.
 - **Mapa/IDs SVG:** cada `HubLogo` recebe IDs de `defs/masks/gradientes` prefixados por instância; resolve a logo partida no mapa por colisão de IDs com o hero.
 - **Desvios assumidos:** título da 03 sem `rotate(180)` (fica legível de cima para baixo, rodado 90°); legendas do mapa a 1,6 R em vez de 1,4 R para sair do HUD; logo do mapa sem beat (fica completa); bento ocupa a altura disponível; a intro antiga mantém os ≈13 s pedidos.
 - **Verificação:** build de produção, `tsc` e `lint` verdes; T4 48/44 px a 14 px com `backdrop-filter` ativo; T10 sem duplicados após 3 voltas; T11 sem scroll horizontal (1440/390); T12 wordmark dentro das margens; T1b luminância mínima 0,041 vs 60 % da cena inferior 0,034; N9 p99 0,412; capturas em `.rea/final`, `.rea/targeted` e `.rea/transitions`.

@@ -3,7 +3,6 @@
 import { useCallback, useState, useSyncExternalStore } from "react";
 import { hero, s01, s02, s03, s04, s05, footer } from "@/content";
 import { LoadingScreen } from "@/components/landing/LoadingScreen";
-import { INTRO_SEEN_KEY, INTRO_SEEN_VALUE } from "@/lib/intro";
 import { FooterScene } from "@/components/scenes/FooterScene";
 import { HeroScene } from "@/components/scenes/HeroScene";
 import { HexFieldScene } from "@/components/scenes/HexFieldScene";
@@ -29,11 +28,6 @@ function LandingExperience() {
     getServerHydrated,
   );
   const finishLoading = useCallback(() => {
-    try {
-      window.localStorage.setItem(INTRO_SEEN_KEY, INTRO_SEEN_VALUE);
-    } catch {
-      /* o modo privado pode bloquear o armazenamento; a intro antiga repete-se */
-    }
     setLoading(false);
     window.requestAnimationFrame(() => {
       document

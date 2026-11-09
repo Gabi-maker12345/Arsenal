@@ -1,7 +1,6 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { INTRO_SEEN_KEY, INTRO_SEEN_VALUE } from "@/lib/intro";
 import { LoadingClassic } from "./LoadingClassic";
 import { LoadingMinimal } from "./LoadingMinimal";
 
@@ -15,9 +14,13 @@ const subscribe = () => () => {};
 
 function getMode(): Mode {
   try {
-    return window.localStorage.getItem(INTRO_SEEN_KEY) === INTRO_SEEN_VALUE
-      ? "minimal"
-      : "classic";
+    const navigation = performance.getEntriesByType("navigation")[0] as
+      | PerformanceNavigationTiming
+      | undefined;
+    if (navigation?.type === "reload") return "minimal";
+    if (navigation?.type) return "classic";
+    const legacy = performance.navigation?.type;
+    return legacy === 1 ? "minimal" : "classic";
   } catch {
     return "classic";
   }

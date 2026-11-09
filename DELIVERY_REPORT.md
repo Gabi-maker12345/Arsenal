@@ -4,7 +4,7 @@
 
 Implementada a passagem do landing single-scroll para **7 cenas fixas** (`hero`, `s01`…`s05`, `footer`) com cena manager, portal hexagonal, trilho, mapa, navbar em cápsula de vidro, hero corrigida, cenas 01/03/05 completas (Mural/Pulso/Ledger, Palco/Pilha/Bento, Túnel/Manifesto/Mapa) e footer A/B com wordmark ajustado por medição.
 
-A intro tem dois modos: a **primeira visita de cada browser** vê a cortina/logo antiga (≈13 s) e grava `arsenal-intro-seen`; as recargas seguintes vêem a entrada curta marca+progresso (≈2 s).
+A intro tem dois modos definidos pela Navigation Timing API: **navegações** (`navigate`/`back_forward`, incluindo fechar e reabrir) vêem a cortina/logo antiga (≈13 s); apenas **reloads** vêem a entrada curta marca+progresso (≈2 s). Sem `localStorage`.
 
 `npm run lint`, `npx tsc --noEmit` e `npm run build` estão verdes. O preview de produção estava em `http://localhost:3001`; o servidor de validação final usou `http://localhost:3000`. Ver `PROGRESS.md` §0.0 para N1–N12, testes e desvios.
 
